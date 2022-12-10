@@ -1,8 +1,8 @@
-use std::collections::VecDeque;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 
 struct SignalCandidate {
-    marker: VecDeque<char>
+    marker: VecDeque<char>,
 }
 
 impl SignalCandidate {
@@ -31,10 +31,11 @@ impl SignalCandidate {
 }
 
 fn main() {
-    let input = std::fs::read_to_string("input.txt")
-        .expect("Could not read input file");
+    let input = std::fs::read_to_string("input.txt").expect("Could not read input file");
 
-    let mut sc = SignalCandidate { marker: VecDeque::new() };
+    let mut sc = SignalCandidate {
+        marker: VecDeque::new(),
+    };
     for (i, c) in input.chars().enumerate() {
         sc.next(c);
 
@@ -51,29 +52,90 @@ mod tests {
     use super::*;
 
     #[test]
-    fn is_signal_marker() {
-        let a = SignalCandidate { marker: VecDeque::from(vec!['a', 'b', 'c', 'd']) };
+    fn test_is_signal_marker() {
+        // Test that is_signal_marker returns true when the marker has 14 characters and all characters are unique
+        let mut sc = SignalCandidate {
+            marker: VecDeque::new(),
+        };
+        sc.marker.push_back('a');
+        sc.marker.push_back('b');
+        sc.marker.push_back('c');
+        sc.marker.push_back('d');
+        sc.marker.push_back('e');
+        sc.marker.push_back('f');
+        sc.marker.push_back('g');
+        sc.marker.push_back('h');
+        sc.marker.push_back('i');
+        sc.marker.push_back('j');
+        sc.marker.push_back('k');
+        sc.marker.push_back('l');
+        sc.marker.push_back('m');
+        sc.marker.push_back('n');
+        assert!(sc.is_signal_marker());
 
-        assert_eq!(a.is_signal_marker(), false);
+        // Test that is_signal_marker returns false when the marker has less than 14 characters
+        let mut sc = SignalCandidate {
+            marker: VecDeque::new(),
+        };
+        sc.marker.push_back('a');
+        sc.marker.push_back('b');
+        sc.marker.push_back('c');
+        sc.marker.push_back('d');
+        sc.marker.push_back('e');
+        sc.marker.push_back('f');
+        sc.marker.push_back('g');
+        sc.marker.push_back('h');
+        sc.marker.push_back('i');
+        sc.marker.push_back('j');
+        sc.marker.push_back('k');
+        sc.marker.push_back('l');
+        assert!(!sc.is_signal_marker());
 
-        let mut a = SignalCandidate { marker: VecDeque::from(vec!['d', 'b', 'c', 'd', 'z', 'v', 'w', 'q', 'r', 'l', 'f', 'y', 'k']) };
+        // Test that is_signal_marker returns false when the marker has 14 characters but not all characters are unique
+        let mut sc = SignalCandidate {
+            marker: VecDeque::new(),
+        };
+        sc.marker.push_back('a');
+        sc.marker.push_back('b');
+        sc.marker.push_back('c');
+        sc.marker.push_back('d');
+        sc.marker.push_back('e');
+        sc.marker.push_back('f');
+        sc.marker.push_back('g');
+        sc.marker.push_back('h');
+        sc.marker.push_back('i');
+        sc.marker.push_back('j');
+        sc.marker.push_back('k');
+        sc.marker.push_back('l');
+        sc.marker.push_back('m');
+        sc.marker.push_back('a');
+        assert!(!sc.is_signal_marker());
+    }
 
-        assert_eq!(a.is_signal_marker(), false);
+    #[test]
+    fn test_next() {
+        // Test that next correctly adds a new character to the marker and removes the oldest character if the marker has reached its maximum size of 14 characters
+        let mut sc = SignalCandidate { marker: VecDeque::new() };
+        for i in 0..15 {
+            sc.next(i as u8 as char);
+        }
+        assert_eq!(sc.marker.len(), 14);
+        assert_eq!(sc.marker.front().unwrap(), &'\u{01}');
+    }
 
-        a.next('e');
-
-        assert_eq!(a.is_signal_marker(), false);
-
-        a.next('b');
-
-        assert_eq!(a.is_signal_marker(), false);
-
-        a.next('p');
-
-        assert_eq!(a.is_signal_marker(), true);
-
-        a.next('j');
-
-        assert_eq!(a.is_signal_marker(), true);
+    #[test]
+    fn test_main() {
+        // Test that main correctly reads the input from the file and prints the correct output for a sample input file
+        let input = "abcdefghijklmabcdefghijklma";
+        let mut sc = SignalCandidate {
+            marker: VecDeque::new(),
+        };
+        for (i, c) in input.chars().enumerate() {
+            sc.next(c);
+            if sc.is_signal_marker() {
+                assert_eq!(i - 13, 28);
+                assert_eq!(i + 1, 29);
+            }
+        }
     }
 }

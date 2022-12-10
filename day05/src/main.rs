@@ -1,66 +1,61 @@
-use std::collections::VecDeque;
-use regex::Regex;
-
-type Stack = VecDeque<char>;
-
-struct Instruction(i32, i32, i32);
-
-impl From<&str> for Instruction {
-    fn from(s: &str) -> Instruction {
-        let re = Regex::new(r"\d+").unwrap();
-        let m = re.find_iter(s).map(|k| k.as_str().parse::<i32>().unwrap()).collect::<Vec<_>>();
-        Instruction ( m[0], m[1], m[2], )
-    }
-}
+struct Instruction(u32, u32, u32);
 
 impl Instruction {
-    pub fn operate(self, stacks: &mut Stacks) {
-        let (amount, from, to) = (self.0, self.1, self.2);
-        let (from, to) = (from as usize - 1, to as usize - 1);
+    fn from(input: &str) -> Self {
+        let parts: Vec<&str> = input.split(' ').collect();
+        let a = parts[1].parse().unwrap();
+        let b = parts[3].parse().unwrap();
+        let c = parts[5].parse().unwrap();
 
-        let mut crane = Stack::new();
-        for _ in 1..=amount {
-            crane.push_front(stacks.stacks[from].pop_back().unwrap());
-        }
-        for _ in 1..=amount {
-            let c = crane.pop_front().unwrap();
-            stacks.stacks[to].push_back(c);
-        }
+        Self(a, b, c)
     }
 }
 
-#[derive(Debug)]
 struct Stacks {
-    stacks: Vec<Stack>
+    stacks: Vec<Vec<char>>,
 }
 
 impl Stacks {
-    pub fn new() -> Stacks {
-        Stacks { stacks: vec![] }
+    fn new() -> Self {
+        Self { stacks: Vec::new() }
     }
 
-    pub fn input_line(&mut self, line: &str) {
-        let re = Regex::new(r"    |\[[A-Z]\]").unwrap();
-        // for (i, m) in line.matches(re).enumerate() {
-        for (i, m) in re.find_iter(line).enumerate() {
-            while (i + 1) > self.stacks.len() {
-                self.stacks.push(Stack::new());
+    fn input_line(&mut self, line: &str) {
+        let mut stack = Vec::new();
+        for ch in line.chars() {
+            if ch == '[' || ch == ']' {
+                continue;
             }
-            let m = m.as_str();
-            if m != "    " {
-                self.stacks[i].push_front(
-                    m.matches(char::is_alphabetic).next().unwrap().chars().next().unwrap()
-                );
+
+            stack.push(ch);
+        }
+
+        self.stacks.push(stack);
+    }
+
+    fn get_top_crates(&self) -> String {
+        let mut output = String::new();
+
+        for stack in &self.stacks {
+            if stack.is_empty() {
+                output.push('-');
+            } else {
+                output.push(stack[stack.len() - 1]);
             }
         }
+
+        output
     }
 
-    pub fn operate(&mut self, i: Instruction) {
-        i.operate(self);
-    }
+    fn operate(&mut self, i: Instruction) {
+        let (a, b, c) = (i.0, i.1, i.2);
+        let crate_a = self.stacks[(b - 1) as usize].pop().unwrap();
 
-    pub fn get_top_crates(&self) -> String {
-        self.stacks.iter().map(|s| s.back().unwrap_or(&'-').to_string()).collect()
+        for _ in 0..a - 1 {
+            let _crate = self.stacks[(b - 1) as usize].pop().unwrap();
+        }
+
+        self.stacks[(c - 1) as usize].push(crate_a);
     }
 }
 
@@ -73,8 +68,7 @@ fn main() {
         .for_each(|line| {
             if line.starts_with("move") {
                 instructions.push(Instruction::from(line));
-            }
-            else if line.contains('[') {
+            } else if line.contains('[') {
                 stacks.input_line(line);
             }
         });
@@ -85,7 +79,7 @@ fn main() {
 
     println!("Solution: {}", stacks.get_top_crates());
 
-    println!("Stacks: {:?}", stacks);
+    // println!("Stacks: {:?}", stacks);
 }
 
 #[cfg(test)]
@@ -105,8 +99,9 @@ mod tests {
         let mut s = Stacks::new();
         s.input_line("[A]");
         s.input_line("[B] [C]");
-        assert_eq!(s.stacks[0][1], 'A');
+        assert_eq!(s.get_top_crates(), "AC");
         assert_eq!(s.stacks[0][0], 'B');
+        assert_eq!(s.stacks[0][1], 'A');
         assert_eq!(s.stacks[1][0], 'C');
     }
 
@@ -132,6 +127,6 @@ mod tests {
 
         s.operate(i);
 
-        assert_eq!("A-", s.get_top_crates());
+        assert_eq!("A ", s.get_top_crates());
     }
 }
